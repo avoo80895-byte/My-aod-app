@@ -13,15 +13,22 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Extract Project Files
+      - name: Extract Project Files & Create Env
         run: |
           mkdir -p extracted
           unzip -o pixelshift-aod.zip -d extracted/
           if [ -d "extracted/pixelshift-aod" ]; then
             cp -rn extracted/pixelshift-aod/* .
+            cp -rn extracted/pixelshift-aod/.* . 2>/dev/null || true
           else
             cp -rn extracted/* .
+            cp -rn extracted/.* . 2>/dev/null || true
           fi
+          # Create missing .env and .env.example files
+          touch .env.example
+          touch .env
+          touch app/.env.example 2>/dev/null || true
+          touch app/.env 2>/dev/null || true
           ls -la
 
       - name: Set up JDK 17
@@ -33,13 +40,13 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build APK using Gradle Wrapper or System Gradle
+      - name: Build APK
         run: |
           if [ -f "./gradlew" ]; then
             chmod +x gradlew
-            ./gradlew assembleDebug
+            ./gradlew assembleDebug --no-daemon
           else
-            gradle assembleDebug
+            gradle assembleDebug --no-daemon
           fi
 
       - name: Upload Finished APK
